@@ -5,19 +5,7 @@ import (
 
 	a "github.com/stretchr/testify/assert"
 	ar "github.com/stretchr/testify/require"
-
-	"github.com/davecgh/go-spew/spew"
 )
-
-var _ = spew.Config
-
-func tsMemoryStorageSetup() (*MemoryStorage, func()) {
-	s := NewMemoryStorage()
-	closer := func() {
-
-	}
-	return s, closer
-}
 
 func Test_MemoryStorage_Factory(t *testing.T) {
 	s, closer := tsMemoryStorageSetup(); defer closer()
@@ -50,14 +38,6 @@ func Test_MemoryStorage_AppLoad_NotFound(t *testing.T) {
 
 	_, err := s.AppLoad(tfAppA.ID)
 	ar.Equal(t, ErrElementNotFound, err, "AppLoad: expected NotFound error")
-}
-
-func tsMemoryStorageWitAppsSetup() (*MemoryStorage, func()) {
-	s, closer := tsMemoryStorageSetup()
-	s.AppSave(&tfAppA)
-	s.AppSave(&tfAppB)
-	s.AppSave(&tfAppC)
-	return s, closer
 }
 
 func Test_MemoryStorage_InstanceSave_Single_Success(t *testing.T) {

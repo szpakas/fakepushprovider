@@ -6,12 +6,6 @@ import (
 	a "github.com/stretchr/testify/assert"
 )
 
-func tsGeneratorSetup(at, ipa, rpi int) (*Generator, func()) {
-	m := NewGenerator(at, ipa, rpi)
-	closer := func() {}
-	return m, closer
-}
-
 func Test_Generator_Factory(t *testing.T) {
 	m, closer := tsGeneratorSetup(3, 4, 5)
 	defer closer()

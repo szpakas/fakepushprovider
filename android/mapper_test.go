@@ -6,23 +6,13 @@ import (
 
 	a "github.com/stretchr/testify/assert"
 	ar "github.com/stretchr/testify/require"
-
-	"github.com/davecgh/go-spew/spew"
 )
-
-var _ = spew.Config
-
-func tsMapperSetup() (*Mapper, func()) {
-	m := NewMapper()
-	closer := func() {}
-	return m, closer
-}
 
 func Test_Mapper_Factory(t *testing.T) {
 	m, closer := tsMapperSetup()
 	defer closer()
 
-	a.IsType(t, &Mapper{}, m, "Incorrect type")
+	a.IsType(t, &MemoryMapper{}, m, "Incorrect type")
 
 	a.NotNil(t, m.regIDs, "regIDs: not initialised")
 }
@@ -45,15 +35,6 @@ func Test_Mapper_Add_Success(t *testing.T) {
 		ar.NoError(t, m.Add(&ins), "Add: unexpected error, instanceID: %s", ins.ID)
 		thAssertInstanceInMapper(t, m, &ins)
 		closer()
-	}
-}
-
-func thAssertInstanceInMapper(t *testing.T, m *Mapper, i *Instance) {
-	for _, r := range i.RegistrationIDS {
-		if !a.Contains(t, m.regIDs, r, "missing registrationID: %s, instanceID: %s", r, i.ID) {
-			continue
-		}
-		a.Equal(t, i, m.regIDs[r], "instance does not match on registrationID: %s, instanceID: %s", r, i.ID)
 	}
 }
 

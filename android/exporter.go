@@ -7,7 +7,7 @@ import (
 
 type omit *struct{}
 
-type InstanceWrapped struct {
+type InstanceExported struct {
 	Instance
 
 	AppID string
@@ -38,9 +38,9 @@ func (e *JSONExporter) AppSave(o *App) error {
 }
 
 func (e *JSONExporter) InstanceSave(o *Instance) error {
-	oW := InstanceWrapped{
+	oW := InstanceExported{
 		Instance: *o,
-		AppID:    o.ID,
+		AppID:    o.App.ID,
 	}
 	return e.InstanceEncoder.Encode(&oW)
 }

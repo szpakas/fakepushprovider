@@ -5,11 +5,6 @@ import (
 	"math/rand"
 )
 
-type Storer interface {
-	AppSave(o *App) error
-	InstanceSave(o *Instance) error
-}
-
 type Generator struct {
 	AppTotal                     int
 	InstancesPerApp              int
