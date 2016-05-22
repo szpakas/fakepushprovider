@@ -24,7 +24,7 @@ func Test_Mapper_Add_Success(t *testing.T) {
 
 		ins := Instance{
 			ID:              fmt.Sprintf("i-%d", tNo),
-			App:             &tfAppA,
+			App:             &TFAppA,
 			RegistrationIDS: make([]RegistrationID, n),
 		}
 
@@ -44,19 +44,19 @@ func Test_Mapper_Add_Error_AlreadyExists(t *testing.T) {
 
 	insAA := Instance{
 		ID:              "i-AA",
-		App:             &tfAppA,
+		App:             &TFAppA,
 		RegistrationIDS: []RegistrationID{"A", "B", "C"},
 	}
 
 	insAB := Instance{
 		ID:              "i-AB",
-		App:             &tfAppA,
+		App:             &TFAppA,
 		RegistrationIDS: []RegistrationID{"D", "E", "F"},
 	}
 
 	insB := Instance{
 		ID:              "i-B",
-		App:             &tfAppA,
+		App:             &TFAppA,
 		RegistrationIDS: []RegistrationID{"G", "A", "H", "I", "F"},
 	}
 

@@ -31,6 +31,15 @@ func (s *MemoryStorage) AppLoad(id string) (*App, error) {
 	return o, nil
 }
 
+func (s *MemoryStorage) AppFind(apiKey string) (*App, error) {
+	for appID, _ := range s.apps {
+		if apiKey == s.apps[appID].ApiKey {
+			return s.apps[appID], nil
+		}
+	}
+	return nil, ErrElementNotFound
+}
+
 func (s *MemoryStorage) InstanceSave(o *Instance) error {
 	_, found := s.instances[o.App.ID]
 	if !found {
@@ -50,4 +59,18 @@ func (s *MemoryStorage) InstanceLoad(aID, iID string) (*Instance, error) {
 		return nil, ErrElementNotFound
 	}
 	return o, nil
+}
+
+func (s *MemoryStorage) InstanceFind(appID string, registrationID RegistrationID) (*Instance, error) {
+	for insID, _ := range s.instances[appID] {
+		if registrationID == s.instances[appID][insID].CanonicalID {
+			return s.instances[appID][insID], nil
+		}
+		for _, regID := range s.instances[appID][insID].RegistrationIDS {
+			if registrationID == regID {
+				return s.instances[appID][insID], nil
+			}
+		}
+	}
+	return nil, ErrElementNotFound
 }

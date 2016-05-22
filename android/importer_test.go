@@ -23,7 +23,7 @@ func Test_Importer_ImportApps(t *testing.T) {
 
 	i.ImportApps(strings.NewReader(strings.Join([]string{tfAppAExportJSON, tfAppBExportJSON, tfAppCExportJSON}, "\n")))
 
-	for _, aExp := range []App{tfAppA, tfAppB, tfAppC} {
+	for _, aExp := range []App{TFAppA, TFAppB, TFAppC} {
 		aGot, err := s.AppLoad(aExp.ID)
 		if a.NoError(t, err, "%s: error on load", aExp.ID) {
 			a.Equal(t, aExp, *aGot, "%s: mismatch on loaded object", aExp.ID)
@@ -36,7 +36,7 @@ func Test_Importer_ImportInstances(t *testing.T) {
 	defer closer()
 
 	// GIVEN: apps are imported
-	apps := []App{tfAppA, tfAppB, tfAppC}
+	apps := []App{TFAppA, TFAppB, TFAppC}
 	for i, _ := range apps {
 		s.AppSave(&apps[i])
 	}
@@ -48,8 +48,8 @@ func Test_Importer_ImportInstances(t *testing.T) {
 
 	// THEN: instances are persisted in storage
 	instances := []Instance{
-		tfInsAA, tfInsAB, tfInsAC, tfInsAZ,
-		tfInsBA, tfInsBB, tfInsBC,
+		TFInsAA, TFInsAB, TFInsAC, TFInsAZ,
+		TFInsBA, TFInsBB, TFInsBC,
 	}
 
 	for i, _ := range instances {

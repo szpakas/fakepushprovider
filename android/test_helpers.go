@@ -26,9 +26,26 @@ func tsMemoryStorageSetup() (*MemoryStorage, func()) {
 
 func tsMemoryStorageWitAppsSetup() (*MemoryStorage, func()) {
 	s, closer := tsMemoryStorageSetup()
-	s.AppSave(&tfAppA)
-	s.AppSave(&tfAppB)
-	s.AppSave(&tfAppC)
+	s.AppSave(&TFAppA)
+	s.AppSave(&TFAppB)
+	s.AppSave(&TFAppC)
+	return s, closer
+}
+
+func TSMemoryStorageWitAppsAndInstancesSetup() (*MemoryStorage, func()) {
+	s, closer := tsMemoryStorageSetup()
+	s.AppSave(&TFAppA)
+	s.AppSave(&TFAppB)
+	s.AppSave(&TFAppC)
+
+	s.InstanceSave(&TFInsAA)
+	s.InstanceSave(&TFInsAB)
+	s.InstanceSave(&TFInsAC)
+	s.InstanceSave(&TFInsAZ)
+	s.InstanceSave(&TFInsBA)
+	s.InstanceSave(&TFInsBB)
+	s.InstanceSave(&TFInsBC)
+
 	return s, closer
 }
 

@@ -1,73 +1,73 @@
 package android
 
-var tfAppA = App{
+var TFAppA = App{
 	ID:       "appIdA",
 	SenderID: "senderIdA",
 	ApiKey:   "apiKeyA",
 }
 
-var tfAppB = App{
+var TFAppB = App{
 	ID:       "appIdB",
 	SenderID: "senderIdB",
 	ApiKey:   "apiKeyB",
 }
-var tfAppC = App{
+var TFAppC = App{
 	ID:       "appIdC",
 	SenderID: "senderIdC",
 	ApiKey:   "apiKeyC",
 }
 
-var tfInsAA = Instance{
+var TFInsAA = Instance{
 	ID:              "instanceAA",
 	State:           InstanceStateRegistered,
-	App:             &tfAppA,
+	App:             &TFAppA,
 	RegistrationIDS: []RegistrationID{"RegIdAA1"},
 	CanonicalID:     "RegIdAA1",
 }
 
-var tfInsAB = Instance{
+var TFInsAB = Instance{
 	ID:              "instanceAB",
 	State:           InstanceStateRegistered,
-	App:             &tfAppA,
+	App:             &TFAppA,
 	RegistrationIDS: []RegistrationID{"RegIdAB1", "RegIdAB2"},
 	CanonicalID:     "RegIdAB1",
 }
 
-var tfInsAC = Instance{
+var TFInsAC = Instance{
 	ID:              "instanceAC",
 	State:           InstanceStateRegistered,
-	App:             &tfAppA,
+	App:             &TFAppA,
 	RegistrationIDS: []RegistrationID{"RegIdAC1", "RegIdAC2", "RegIdAC3"},
 	CanonicalID:     "RegIdAC3",
 }
 
-var tfInsAZ = Instance{
+var TFInsAZ = Instance{
 	ID:              "instanceAZ",
 	State:           InstanceStateUnregistered,
-	App:             &tfAppA,
+	App:             &TFAppA,
 	RegistrationIDS: []RegistrationID{"RegIdAZ1", "RegIdAZ2"},
 }
 
-var tfInsBA = Instance{
+var TFInsBA = Instance{
 	ID:              "instanceBA",
 	State:           InstanceStateRegistered,
-	App:             &tfAppB,
+	App:             &TFAppB,
 	RegistrationIDS: []RegistrationID{"RegIdBA1"},
 	CanonicalID:     "RegIdBA1",
 }
 
-var tfInsBB = Instance{
+var TFInsBB = Instance{
 	ID:              "instanceBB",
 	State:           InstanceStateRegistered,
-	App:             &tfAppB,
+	App:             &TFAppB,
 	RegistrationIDS: []RegistrationID{"RegIdBB1", "RegIdBB2"},
 	CanonicalID:     "RegIdBB1",
 }
 
-var tfInsBC = Instance{
+var TFInsBC = Instance{
 	ID:              "instanceBC",
 	State:           InstanceStateRegistered,
-	App:             &tfAppB,
+	App:             &TFAppB,
 	RegistrationIDS: []RegistrationID{"RegIdBC1", "RegIdBC2", "RegIdBC3"},
 	CanonicalID:     "RegIdBC3",
 }
