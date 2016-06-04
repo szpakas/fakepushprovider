@@ -55,8 +55,8 @@ func tsMapperSetup() (*MemoryMapper, func()) {
 	return m, closer
 }
 
-func tsGeneratorSetup(at, ipa, rpi int) (*Generator, func()) {
-	m := NewGenerator(at, ipa, rpi)
+func tsGeneratorSetup(at, ipa int, up float64, rpi int) (*Generator, func()) {
+	m := NewGenerator(at, ipa, up, rpi)
 	closer := func() {}
 	return m, closer
 }

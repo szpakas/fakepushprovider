@@ -8,18 +8,24 @@ import (
 type Generator struct {
 	AppTotal                     int
 	InstancesPerApp              int
+	UnregisteredPercent          float64
 	RegistrationIDPerInstanceMax int
 }
 
-func NewGenerator(at, ipa, rpi int) *Generator {
+func NewGenerator(at, ipa int, up float64, rpi int) *Generator {
 	return &Generator{
 		AppTotal:                     at,
 		InstancesPerApp:              ipa,
+		UnregisteredPercent:          up,
 		RegistrationIDPerInstanceMax: rpi,
 	}
 }
 
 func (g *Generator) Generate(s Storer) {
+	var state InstanceState
+	var totalCnt, unregisteredCnt float64
+	pE := g.UnregisteredPercent / 100.0
+
 	for aCnt := 0; aCnt < g.AppTotal; aCnt++ {
 		app := App{
 			ID:       fmt.Sprintf("appId-%d", aCnt+1),
@@ -29,10 +35,21 @@ func (g *Generator) Generate(s Storer) {
 
 		s.AppSave(&app)
 
+		totalCnt = 0
+		unregisteredCnt = 0
 		for iCnt := 0; iCnt < g.InstancesPerApp; iCnt++ {
+			totalCnt++
+
+			state = InstanceStateRegistered
+			// we are looking for exact percentage of unregistered instances
+			if (totalCnt*pE - unregisteredCnt) >= 1 {
+				state = InstanceStateUnregistered
+				unregisteredCnt++
+			}
+
 			ins := Instance{
 				ID:              fmt.Sprintf("%s-instanceId-%d", app.ID, iCnt+1),
-				State:           InstanceStateRegistered,
+				State:           state,
 				RegistrationIDS: make([]RegistrationID, rand.Intn(g.RegistrationIDPerInstanceMax-1)+1),
 				App:             &app,
 			}

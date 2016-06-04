@@ -5,6 +5,7 @@ import (
 	"io"
 )
 
+// omit is used to exclude fields during JSON marshalling.
 type omit *struct{}
 
 type InstanceExported struct {

@@ -6,7 +6,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/gavv/httpexpect"
 	a "github.com/stretchr/testify/assert"
 	ar "github.com/stretchr/testify/require"
@@ -18,9 +17,9 @@ func Test_Handler_Factory(t *testing.T) {
 	_, h, _, _, closer := tsServerSetup(t, "")
 	defer closer()
 
-	a.IsType(t, &handler{}, h, "Incorrect type")
+	a.IsType(t, &Handler{}, h, "Incorrect type")
 	ar.NotNil(t, h, "empty handler")
-	a.NotNil(t, h.storage, "storage not defined")
+	a.NotNil(t, h.Storage, "storage not defined")
 }
 
 func Test_Handler_Response_Success(t *testing.T) {
@@ -97,12 +96,12 @@ func Test_Handler_Response_Success(t *testing.T) {
 
 // -- setup
 
-func tsServerSetup(t *testing.T, symbol string) (*android.MemoryStorage, *handler, *httptest.Server, *httpexpect.Expect, func()) {
+func tsServerSetup(t *testing.T, symbol string) (*android.MemoryStorage, *Handler, *httptest.Server, *httpexpect.Expect, func()) {
 	// -- storage
 	st, stCloser := android.TSMemoryStorageWitAppsAndInstancesSetup()
 
 	// -- handler
-	h := newHandler(st)
+	h := NewHandler(st)
 
 	srv := httptest.NewServer(h)
 
@@ -177,9 +176,8 @@ func (r *thsPushReq) Req() *httpexpect.Request {
 	return req
 }
 
-var _ = spew.Config
-
-// -- custom reporter
+// thAssertReporter is a custom reporter for testify library.
+// It allows extra symbol to be passed so table tests are more readable
 type thAssertReporter struct {
 	backend *a.Assertions
 	symbol  string

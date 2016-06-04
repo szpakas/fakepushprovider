@@ -1,6 +1,9 @@
 package android
 
-import "github.com/pkg/errors"
+import (
+	"errors"
+	"fmt"
+)
 
 var (
 	ErrElementNotFound = errors.New("Storage: element not found")
@@ -73,4 +76,31 @@ func (s *MemoryStorage) InstanceFind(appID string, registrationID RegistrationID
 		}
 	}
 	return nil, ErrElementNotFound
+}
+
+func (s *MemoryStorage) InstancesTotal() int {
+	var out int
+	for appID, _ := range s.instances {
+		out += len(s.instances[appID])
+	}
+	return out
+}
+
+// Report is producing report on the state of the storage.
+// It's useful as debugging and monitoring tool.
+func (s *MemoryStorage) Report() map[string]interface{} {
+	out := make(map[string]interface{})
+	out["apps:total"] = len(s.apps)
+	for appID, app := range s.apps {
+		out[fmt.Sprintf("apps:id=%s:id", appID)] = app.ID
+		out[fmt.Sprintf("apps:id=%s:apiKey", appID)] = app.ApiKey
+		out[fmt.Sprintf("apps:id=%s:senderId", appID)] = app.SenderID
+	}
+
+	out["instances:total:count"] = s.InstancesTotal()
+	for appID, _ := range s.instances {
+		out[fmt.Sprintf("apps:id=%s:instances:total", appID)] = len(s.instances[appID])
+	}
+
+	return out
 }

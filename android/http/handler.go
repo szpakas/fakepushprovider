@@ -5,28 +5,25 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/szpakas/fakepushprovider/android"
 )
-
-var _ = spew.Config
 
 type Storage interface {
 	AppFind(apiKey string) (*android.App, error)
 	InstanceFind(appID string, registrationID android.RegistrationID) (*android.Instance, error)
 }
 
-type handler struct {
-	storage Storage
+type Handler struct {
+	Storage Storage
 }
 
-func newHandler(storage Storage) *handler {
-	return &handler{
-		storage: storage,
+func NewHandler(storage Storage) *Handler {
+	return &Handler{
+		Storage: storage,
 	}
 }
 
-func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	reqB := new(DownstreamMessage)
 	_ = json.NewDecoder(r.Body).Decode(reqB)
 
@@ -42,14 +39,14 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		regIDs = append(regIDs, reqB.To)
 	}
 
-	app, _ := h.storage.AppFind(apiKey)
+	app, _ := h.Storage.AppFind(apiKey)
 
 	resB := DownstreamResponse{
 		MulticastID: 1234567890,
 	}
 
 	for _, regID := range regIDs {
-		ins, err := h.storage.InstanceFind(app.ID, regID)
+		ins, err := h.Storage.InstanceFind(app.ID, regID)
 		if err != nil || ins.State == android.InstanceStateUnregistered {
 			resB.Failure++
 			resB.Results = append(resB.Results, MessageResult{Error: DeviceUnregistered})

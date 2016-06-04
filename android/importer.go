@@ -34,13 +34,24 @@ func (i *JSONImporter) ImportApps(r io.Reader) {
 	}
 }
 
-func (i *JSONImporter) ImportInstances(r io.Reader) {
+func (i *JSONImporter) ImportInstances(r io.Reader) ImportInstancesReport {
+	rep := ImportInstancesReport{}
+
 	s := bufio.NewScanner(r)
 	for s.Scan() {
 		insExp := new(InstanceExported)
 		_ = json.Unmarshal(s.Bytes(), insExp)
 
-		app, _ := i.Storage.AppLoad(insExp.AppID)
+		app, err := i.Storage.AppLoad(insExp.AppID)
+		if err == ErrElementNotFound {
+			rep.Failed++
+			rep.Failures = append(rep.Failures, ImportInstanceFailureReason{
+				ID: insExp.ID,
+				AppID: insExp.AppID,
+				Reason: FailUnknownApp,
+			})
+			continue
+		}
 
 		ins := new(Instance)
 		*ins = insExp.Instance
@@ -49,5 +60,27 @@ func (i *JSONImporter) ImportInstances(r io.Reader) {
 		_ = i.Storage.InstanceSave(ins)
 
 		_ = i.Mapper.Add(ins)
+
+		rep.Succeeded++
 	}
+
+	return rep
+}
+
+type ImportFailureReason string
+
+const (
+	FailUnknownApp ImportFailureReason = "unknownApp"
+)
+
+type ImportInstanceFailureReason struct {
+	ID     string
+	AppID  string
+	Reason ImportFailureReason
+}
+
+type ImportInstancesReport struct {
+	Succeeded int
+	Failed    int
+	Failures  []ImportInstanceFailureReason
 }
