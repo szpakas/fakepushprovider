@@ -1,4 +1,4 @@
-# Fake push provider
+# Fake push provider [![Build Status](https://travis-ci.org/szpakas/fakepushprovider.svg?branch=master)](https://travis-ci.org/szpakas/fakepushprovider)
 
 [![Apache 2.0 License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/szpakas/fakepushprovider/blob/master/LICENSE)
 
