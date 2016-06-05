@@ -10,7 +10,7 @@ import (
 	"github.com/uber-go/zap"
 	"github.com/vrischmann/envconfig"
 
-	"github.com/szpakas/fakepushprovider/android"
+	"github.com/szpakas/fakepushprovider/fcm"
 )
 
 const (
@@ -20,7 +20,7 @@ const (
 
 type config struct {
 	// AppsFile is path to test data file with apps definition.
-	AppsFile      string
+	AppsFile string
 
 	// InstancesFile is path to test data file with instances definition.
 	// Beware: apps from apps file have to match
@@ -56,9 +56,9 @@ func main() {
 	lgr.Info("starting")
 
 	// -- apps
-	storage := android.NewMemoryStorage()
-	mapper := android.NewMemoryMapper()
-	importer := android.NewJSONImporter(storage, mapper)
+	storage := fcm.NewMemoryStorage()
+	mapper := fcm.NewMemoryMapper()
+	importer := fcm.NewJSONImporter(storage, mapper)
 
 	appsFile, err := os.Open(cfg.AppsFile)
 	if err != nil {
@@ -76,10 +76,10 @@ func main() {
 
 	scn := bufio.NewScanner(iFile)
 	for scn.Scan() {
-		insExp := new(android.InstanceExported)
+		insExp := new(fcm.InstanceExported)
 		_ = json.Unmarshal(scn.Bytes(), insExp)
 		app, err := storage.AppLoad(insExp.AppID)
-		if err == android.ErrElementNotFound {
+		if err == fcm.ErrElementNotFound {
 			continue
 		}
 

@@ -7,11 +7,9 @@
 Project is in very early stage. Most of the functionality is missing and API breaking changes will happen.
 
 Planned support for providers/transports:
-- GCM/HTTP
-- GCM/CCS (XMPP)
+- FCM(GCM)/HTTP
+- FCM(GCM)/CCS (XMPP) - not implemented
 - APNS/2 (HTTP/2)
-
-As of now only limited support for GCM/HTTP is implemented.
 
 ## License
 

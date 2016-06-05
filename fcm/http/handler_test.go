@@ -10,7 +10,8 @@ import (
 	a "github.com/stretchr/testify/assert"
 	ar "github.com/stretchr/testify/require"
 
-	"github.com/szpakas/fakepushprovider/android"
+	"github.com/szpakas/fakepushprovider/common"
+	"github.com/szpakas/fakepushprovider/fcm"
 )
 
 func Test_Handler_Factory(t *testing.T) {
@@ -34,8 +35,8 @@ func Test_Handler_Response_Success(t *testing.T) {
 	}{
 		"single, unicast, success": {
 			thsPushReq{
-				apiKey:       android.TFAppA.ApiKey,
-				To:           android.TFInsAA.CanonicalID,
+				apiKey:       fcm.TFAppA.ApiKey,
+				To:           fcm.TFInsAA.CanonicalID,
 				Notification: n,
 			},
 			1, 0, 0,
@@ -43,8 +44,8 @@ func Test_Handler_Response_Success(t *testing.T) {
 		},
 		"single, multicast, success": {
 			thsPushReq{
-				apiKey:          android.TFAppA.ApiKey,
-				RegistrationIDS: []android.RegistrationID{android.TFInsAB.CanonicalID},
+				apiKey:          fcm.TFAppA.ApiKey,
+				RegistrationIDS: []fcm.RegistrationID{fcm.TFInsAB.CanonicalID},
 				Notification:    n,
 			},
 			1, 0, 0,
@@ -52,9 +53,9 @@ func Test_Handler_Response_Success(t *testing.T) {
 		},
 		"multiple, multicast, success": {
 			thsPushReq{
-				apiKey: android.TFAppA.ApiKey,
-				RegistrationIDS: []android.RegistrationID{
-					android.TFInsAA.CanonicalID, android.TFInsAB.CanonicalID, android.TFInsAC.CanonicalID,
+				apiKey: fcm.TFAppA.ApiKey,
+				RegistrationIDS: []fcm.RegistrationID{
+					fcm.TFInsAA.CanonicalID, fcm.TFInsAB.CanonicalID, fcm.TFInsAC.CanonicalID,
 				},
 				Notification: n,
 			},
@@ -63,7 +64,7 @@ func Test_Handler_Response_Success(t *testing.T) {
 		},
 		"single, unicast, error, app exists, registration unknown": {
 			thsPushReq{
-				apiKey:       android.TFAppA.ApiKey,
+				apiKey:       fcm.TFAppA.ApiKey,
 				To:           "fakeRegID",
 				Notification: n,
 			},
@@ -72,8 +73,8 @@ func Test_Handler_Response_Success(t *testing.T) {
 		},
 		"single, unicast, error, app exists, instance unregistered": {
 			thsPushReq{
-				apiKey:       android.TFAppA.ApiKey,
-				To:           android.TFInsAZ.RegistrationIDS[0],
+				apiKey:       fcm.TFAppA.ApiKey,
+				To:           fcm.TFInsAZ.RegistrationIDS[0],
 				Notification: n,
 			},
 			0, 1, 0,
@@ -96,9 +97,9 @@ func Test_Handler_Response_Success(t *testing.T) {
 
 // -- setup
 
-func tsServerSetup(t *testing.T, symbol string) (*android.MemoryStorage, *Handler, *httptest.Server, *httpexpect.Expect, func()) {
+func tsServerSetup(t *testing.T, symbol string) (*fcm.MemoryStorage, *Handler, *httptest.Server, *httpexpect.Expect, func()) {
 	// -- storage
-	st, stCloser := android.TSMemoryStorageWitAppsAndInstancesSetup()
+	st, stCloser := fcm.TSMemoryStorageWitAppsAndInstancesSetup()
 
 	// -- handler
 	h := NewHandler(st)
@@ -109,7 +110,7 @@ func tsServerSetup(t *testing.T, symbol string) (*android.MemoryStorage, *Handle
 	e := httpexpect.WithConfig(httpexpect.Config{
 		BaseURL:  srv.URL,
 		Client:   http.DefaultClient,
-		Reporter: &thAssertReporter{a.New(t), symbol},
+		Reporter: &common.THAssertReporter{a.New(t), symbol},
 	})
 
 	closer := func() {
@@ -124,7 +125,7 @@ func tsServerSetup(t *testing.T, symbol string) (*android.MemoryStorage, *Handle
 
 type thsMessageResult struct {
 	Success        bool
-	RegistrationID android.RegistrationID
+	RegistrationID fcm.RegistrationID
 	Error          DownstreamError
 }
 
@@ -163,9 +164,9 @@ type thsPushReq struct {
 	e      *httpexpect.Expect `json:"-"`
 	apiKey string             `json:"-"`
 
-	To              android.RegistrationID   `json:"to,omitempty"`
-	RegistrationIDS []android.RegistrationID `json:"registration_ids,omitempty"`
-	Notification    thsNotification          `json:"notification,omitempty"`
+	To              fcm.RegistrationID   `json:"to,omitempty"`
+	RegistrationIDS []fcm.RegistrationID `json:"registration_ids,omitempty"`
+	Notification    thsNotification      `json:"notification,omitempty"`
 }
 
 func (r *thsPushReq) Req() *httpexpect.Request {
@@ -174,20 +175,4 @@ func (r *thsPushReq) Req() *httpexpect.Request {
 		WithJSON(r)
 
 	return req
-}
-
-// thAssertReporter is a custom reporter for testify library.
-// It allows extra symbol to be passed so table tests are more readable
-type thAssertReporter struct {
-	backend *a.Assertions
-	symbol  string
-}
-
-// Errorf implements Reporter.Errorf.
-func (r *thAssertReporter) Errorf(message string, args ...interface{}) {
-	msg := fmt.Sprintf(message, args...)
-	if r.symbol != "" {
-		msg = fmt.Sprintf("--- test case: %s ---%s", r.symbol, msg)
-	}
-	r.backend.Fail(msg)
 }

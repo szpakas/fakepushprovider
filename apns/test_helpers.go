@@ -1,21 +1,16 @@
-package android
+package apns
 
 import (
 	"bytes"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
+	"github.com/gavv/httpexpect"
 	a "github.com/stretchr/testify/assert"
-)
 
-// -- helpers
-func thAssertInstanceInMapper(t *testing.T, m *MemoryMapper, i *Instance) {
-	for _, r := range i.RegistrationIDS {
-		if !a.Contains(t, m.regIDs, r, "missing registrationID: %s, instanceID: %s", r, i.ID) {
-			continue
-		}
-		a.Equal(t, i, m.regIDs[r], "instance does not match on registrationID: %s, instanceID: %s", r, i.ID)
-	}
-}
+	"github.com/szpakas/fakepushprovider/common"
+)
 
 // -- suite setup
 func tsMemoryStorageSetup() (*MemoryStorage, func()) {
@@ -32,7 +27,7 @@ func tsMemoryStorageWitAppsSetup() (*MemoryStorage, func()) {
 	return s, closer
 }
 
-func TSMemoryStorageWitAppsAndInstancesSetup() (*MemoryStorage, func()) {
+func tsMemoryStorageWitAppsAndInstancesSetup() (*MemoryStorage, func()) {
 	s, closer := tsMemoryStorageSetup()
 	s.AppSave(&TFAppA)
 	s.AppSave(&TFAppB)
@@ -41,10 +36,8 @@ func TSMemoryStorageWitAppsAndInstancesSetup() (*MemoryStorage, func()) {
 	s.InstanceSave(&TFInsAA)
 	s.InstanceSave(&TFInsAB)
 	s.InstanceSave(&TFInsAC)
+	s.InstanceSave(&TFInsAD)
 	s.InstanceSave(&TFInsAZ)
-	s.InstanceSave(&TFInsBA)
-	s.InstanceSave(&TFInsBB)
-	s.InstanceSave(&TFInsBC)
 
 	return s, closer
 }
@@ -55,8 +48,8 @@ func tsMapperSetup() (*MemoryMapper, func()) {
 	return m, closer
 }
 
-func tsGeneratorSetup(at, ipa int, up float64, rpi int) (*Generator, func()) {
-	m := NewGenerator(at, ipa, up, rpi)
+func tsGeneratorSetup(at, ipa int, up float64) (*Generator, func()) {
+	m := NewGenerator(at, ipa, up)
 	closer := func() {}
 	return m, closer
 }
@@ -73,4 +66,34 @@ func tsExporterSetup() (*JSONExporter, *bytes.Buffer, *bytes.Buffer, func()) {
 	iw := &bytes.Buffer{}
 	e := NewJSONExporter(aw, iw)
 	return e, aw, iw, func() {}
+}
+
+// -- helpers
+func thAssertInstanceInMapper(t *testing.T, m *MemoryMapper, i *Instance) {
+	a.Contains(t, m.tokens, i.Token, "missing token: %s, instanceID: %s", i.Token, i.ID)
+}
+
+// -- http helpers
+func tsServerSetup(t *testing.T, symbol string) (*MemoryStorage, *Handler, *httptest.Server, *httpexpect.Expect, func()) {
+	// -- storage
+	st, stCloser := tsMemoryStorageWitAppsAndInstancesSetup()
+
+	// -- handler
+	h := NewHandler(st)
+
+	srv := httptest.NewServer(h)
+
+	// -- client test helper
+	e := httpexpect.WithConfig(httpexpect.Config{
+		BaseURL:  srv.URL,
+		Client:   http.DefaultClient,
+		Reporter: &common.THAssertReporter{a.New(t), symbol},
+	})
+
+	closer := func() {
+		stCloser()
+		srv.Close()
+	}
+
+	return st, h, srv, e, closer
 }

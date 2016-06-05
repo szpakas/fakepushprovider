@@ -5,12 +5,12 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/szpakas/fakepushprovider/android"
+	"github.com/szpakas/fakepushprovider/fcm"
 )
 
 type Storage interface {
-	AppFind(apiKey string) (*android.App, error)
-	InstanceFind(appID string, registrationID android.RegistrationID) (*android.Instance, error)
+	AppFind(apiKey string) (*fcm.App, error)
+	InstanceFind(appID string, registrationID fcm.RegistrationID) (*fcm.Instance, error)
 }
 
 type Handler struct {
@@ -31,7 +31,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	authorizationValue := r.Header.Get("Authorization")
 	apiKey := strings.Split(authorizationValue, "=")[1]
 
-	var regIDs []android.RegistrationID
+	var regIDs []fcm.RegistrationID
 	for _, regID := range reqB.RegistrationIDS {
 		regIDs = append(regIDs, regID)
 	}
@@ -47,7 +47,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	for _, regID := range regIDs {
 		ins, err := h.Storage.InstanceFind(app.ID, regID)
-		if err != nil || ins.State == android.InstanceStateUnregistered {
+		if err != nil || ins.State == fcm.InstanceStateUnregistered {
 			resB.Failure++
 			resB.Results = append(resB.Results, MessageResult{Error: DeviceUnregistered})
 			continue

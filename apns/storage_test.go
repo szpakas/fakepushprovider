@@ -1,4 +1,4 @@
-package android
+package apns
 
 import (
 	"testing"
@@ -49,7 +49,7 @@ func Test_MemoryStorage_AppFind_Exists(t *testing.T) {
 	defer closer()
 
 	s.apps[TFAppA.ID] = &TFAppA
-	o, err := s.AppFind(TFAppA.ApiKey)
+	o, err := s.AppFind(TFAppA.BundleID)
 	ar.NoError(t, err, "AppFind: unexpected error")
 	a.Equal(t, &TFAppA, o, "App from storage does not match")
 }
@@ -58,7 +58,7 @@ func Test_MemoryStorage_AppFind_NotFound(t *testing.T) {
 	s, closer := tsMemoryStorageSetup()
 	defer closer()
 
-	_, err := s.AppFind(TFAppA.ID)
+	_, err := s.AppFind(TFAppA.BundleID)
 	ar.Equal(t, ErrElementNotFound, err, "AppFind: expected NotFound error")
 }
 
@@ -79,9 +79,12 @@ func Test_MemoryStorage_InstanceSave_Multiple_Success(t *testing.T) {
 	ar.NoError(t, s.InstanceSave(&TFInsAA), "InstanceSave %s: unexpected error", "AA")
 	ar.NoError(t, s.InstanceSave(&TFInsAB), "InstanceSave %s: unexpected error", "AB")
 	ar.NoError(t, s.InstanceSave(&TFInsAC), "InstanceSave %s: unexpected error", "AC")
-	ar.NoError(t, s.InstanceSave(&TFInsBA), "InstanceSave %s: unexpected error", "BA")
-	ar.NoError(t, s.InstanceSave(&TFInsBB), "InstanceSave %s: unexpected error", "BB")
-	ar.NoError(t, s.InstanceSave(&TFInsBC), "InstanceSave %s: unexpected error", "BC")
+	ar.NoError(t, s.InstanceSave(&TFInsAD), "InstanceSave %s: unexpected error", "AD")
+	ar.NoError(t, s.InstanceSave(&TFInsAZ), "InstanceSave %s: unexpected error", "AZ")
+
+	//ar.NoError(t, s.InstanceSave(&TFInsBA), "InstanceSave %s: unexpected error", "BA")
+	//ar.NoError(t, s.InstanceSave(&TFInsBB), "InstanceSave %s: unexpected error", "BB")
+	//ar.NoError(t, s.InstanceSave(&TFInsBC), "InstanceSave %s: unexpected error", "BC")
 
 	a.Equal(t, s.instances[TFInsAA.App.ID][TFInsAA.ID], &TFInsAA, "Instance %s: from storage does not match", "AA")
 	a.Equal(t, s.instances[TFInsAB.App.ID][TFInsAB.ID], &TFInsAB, "Instance %s: from storage does not match", "AB")
@@ -116,27 +119,17 @@ func Test_MemoryStorage_InstanceLoad_NotFound_AppDoesNotExists(t *testing.T) {
 	a.Equal(t, ErrElementNotFound, err, "InstanceLoad: expected NotFound error")
 }
 
-func Test_MemoryStorage_InstanceFind_ByCanonicalID_Exists(t *testing.T) {
-	s, closer := TSMemoryStorageWitAppsAndInstancesSetup()
+func Test_MemoryStorage_InstanceFind_Exists(t *testing.T) {
+	s, closer := tsMemoryStorageWitAppsAndInstancesSetup()
 	defer closer()
 
-	o, err := s.InstanceFind(TFInsAA.App.ID, TFInsAA.CanonicalID)
+	o, err := s.InstanceFind(TFInsAA.App.ID, TFInsAA.Token)
 	ar.NoError(t, err, "InstanceFind: unexpected error")
 	a.Equal(t, &TFInsAA, o, "Instance from storage does not match")
 }
 
-func Test_MemoryStorage_InstanceFind_ByNotCanonicalID_Exists(t *testing.T) {
-	s, closer := TSMemoryStorageWitAppsAndInstancesSetup()
-	defer closer()
-
-	o, err := s.InstanceFind(TFInsAC.App.ID, TFInsAC.RegistrationIDS[1])
-	ar.NotEqual(t, TFInsAC.CanonicalID, TFInsAC.RegistrationIDS[1], "selected ID is a canonical one")
-	ar.NoError(t, err, "InstanceFind: unexpected error")
-	a.Equal(t, &TFInsAC, o, "Instance from storage does not match")
-}
-
 func Test_MemoryStorage_InstanceFind_Error_NotFound_AppExists(t *testing.T) {
-	s, closer := TSMemoryStorageWitAppsAndInstancesSetup()
+	s, closer := tsMemoryStorageWitAppsAndInstancesSetup()
 	defer closer()
 
 	_, err := s.InstanceFind(TFInsAA.App.ID, "FakeRegID")
@@ -144,16 +137,9 @@ func Test_MemoryStorage_InstanceFind_Error_NotFound_AppExists(t *testing.T) {
 }
 
 func Test_MemoryStorage_InstanceFind_Error_NotFound_AppDoesNotExists(t *testing.T) {
-	s, closer := TSMemoryStorageWitAppsAndInstancesSetup()
+	s, closer := tsMemoryStorageWitAppsAndInstancesSetup()
 	defer closer()
 
 	_, err := s.InstanceFind("FakeAppID", "FakeRegID")
 	ar.Equal(t, ErrElementNotFound, err, "InstanceFind: expected error")
 }
-
-//func Test_MemoryStorage_AppFind_NotFound(t *testing.T) {
-//	s, closer := tsMemoryStorageSetup(); defer closer()
-//
-//	_, err := s.AppFind(tfAppA.ID)
-//	ar.Equal(t, ErrElementNotFound, err, "AppFind: expected NotFound error")
-//}

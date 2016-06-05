@@ -1,4 +1,4 @@
-package android
+package fcm
 
 type MemoryMapper struct {
 	regIDs map[RegistrationID]*Instance

@@ -9,7 +9,7 @@ import (
 
 type LoggingMiddleware struct {
 	Handler http.Handler
-	Logger zap.Logger
+	Logger  zap.Logger
 }
 
 func (m *LoggingMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {

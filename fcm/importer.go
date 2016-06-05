@@ -1,4 +1,4 @@
-package android
+package fcm
 
 import (
 	"bufio"
@@ -46,8 +46,8 @@ func (i *JSONImporter) ImportInstances(r io.Reader) ImportInstancesReport {
 		if err == ErrElementNotFound {
 			rep.Failed++
 			rep.Failures = append(rep.Failures, ImportInstanceFailureReason{
-				ID: insExp.ID,
-				AppID: insExp.AppID,
+				ID:     insExp.ID,
+				AppID:  insExp.AppID,
 				Reason: FailUnknownApp,
 			})
 			continue

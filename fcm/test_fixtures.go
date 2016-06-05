@@ -1,4 +1,4 @@
-package android
+package fcm
 
 var TFAppA = App{
 	ID:       "appIdA",

@@ -1,19 +1,19 @@
 package http
 
-import "github.com/szpakas/fakepushprovider/android"
+import "github.com/szpakas/fakepushprovider/fcm"
 
 // DownstreamMessage is a message designed for application on device and send from app server to GCM.
 // Most of the documentation on keys taken from GCM and/or APNS docs.
 type DownstreamMessage struct {
 	// To specifies the recipient of a message.
 	// The value must be a registration token or notification key.
-	To android.RegistrationID `json:"to,omitempty"`
+	To fcm.RegistrationID `json:"to,omitempty"`
 
 	// RegistrationIDS specifies a list of devices (registration tokens, or IDs) receiving a multicast message.
 	// It must contain at least 1 and at most 1000 registration tokens.
 	// Use this parameter only for multicast messaging, not for single recipients.
 	// Multicast messages (sending to more than 1 registration tokens) are allowed using HTTP JSON format only.
-	RegistrationIDS []android.RegistrationID `json:"registration_ids,omitempty"`
+	RegistrationIDS []fcm.RegistrationID `json:"registration_ids,omitempty"`
 
 	// CollapseKey identifies a group of messages (e.g., with collapse_key: "Updates Available")
 	// that can be collapsed, so that only the last message gets sent when delivery can be resumed.
@@ -102,9 +102,9 @@ type DownstreamResponse struct {
 }
 
 type MessageResult struct {
-	MessageID      string                 `json:"message_id,omitempty"`
-	RegistrationID android.RegistrationID `json:"registration_id,omitempty"`
-	Error          DownstreamError        `json:"error,omitempty"`
+	MessageID      string             `json:"message_id,omitempty"`
+	RegistrationID fcm.RegistrationID `json:"registration_id,omitempty"`
+	Error          DownstreamError    `json:"error,omitempty"`
 }
 
 type DownstreamError string

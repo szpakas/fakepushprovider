@@ -1,4 +1,4 @@
-package android
+package fcm
 
 import (
 	"strings"

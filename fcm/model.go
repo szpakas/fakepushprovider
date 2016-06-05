@@ -1,4 +1,4 @@
-package android
+package fcm
 
 type App struct {
 	ID       string

@@ -1,8 +1,7 @@
-package android
+package apns
 
 import (
 	"errors"
-	"fmt"
 )
 
 var (
@@ -36,7 +35,7 @@ func (s *MemoryStorage) AppLoad(id string) (*App, error) {
 
 func (s *MemoryStorage) AppFind(apiKey string) (*App, error) {
 	for appID, _ := range s.apps {
-		if apiKey == s.apps[appID].ApiKey {
+		if apiKey == s.apps[appID].BundleID {
 			return s.apps[appID], nil
 		}
 	}
@@ -64,15 +63,10 @@ func (s *MemoryStorage) InstanceLoad(aID, iID string) (*Instance, error) {
 	return o, nil
 }
 
-func (s *MemoryStorage) InstanceFind(appID string, registrationID RegistrationID) (*Instance, error) {
+func (s *MemoryStorage) InstanceFind(appID string, token Token) (*Instance, error) {
 	for insID, _ := range s.instances[appID] {
-		if registrationID == s.instances[appID][insID].CanonicalID {
+		if token == s.instances[appID][insID].Token {
 			return s.instances[appID][insID], nil
-		}
-		for _, regID := range s.instances[appID][insID].RegistrationIDS {
-			if registrationID == regID {
-				return s.instances[appID][insID], nil
-			}
 		}
 	}
 	return nil, ErrElementNotFound
@@ -86,21 +80,21 @@ func (s *MemoryStorage) InstancesTotal() int {
 	return out
 }
 
-// Report is producing report on the state of the storage.
-// It's useful as debugging and monitoring tool.
-func (s *MemoryStorage) Report() map[string]interface{} {
-	out := make(map[string]interface{})
-	out["apps:total"] = len(s.apps)
-	for appID, app := range s.apps {
-		out[fmt.Sprintf("apps:id=%s:id", appID)] = app.ID
-		out[fmt.Sprintf("apps:id=%s:apiKey", appID)] = app.ApiKey
-		out[fmt.Sprintf("apps:id=%s:senderId", appID)] = app.SenderID
-	}
-
-	out["instances:total:count"] = s.InstancesTotal()
-	for appID, _ := range s.instances {
-		out[fmt.Sprintf("apps:id=%s:instances:total", appID)] = len(s.instances[appID])
-	}
-
-	return out
-}
+//// Report is producing report on the state of the storage.
+//// It's useful as debugging and monitoring tool.
+//func (s *MemoryStorage) Report() map[string]interface{} {
+//	out := make(map[string]interface{})
+//	out["apps:total"] = len(s.apps)
+//	for appID, app := range s.apps {
+//		out[fmt.Sprintf("apps:id=%s:id", appID)] = app.ID
+//		out[fmt.Sprintf("apps:id=%s:apiKey", appID)] = app.ApiKey
+//		out[fmt.Sprintf("apps:id=%s:senderId", appID)] = app.SenderID
+//	}
+//
+//	out["instances:total:count"] = s.InstancesTotal()
+//	for appID, _ := range s.instances {
+//		out[fmt.Sprintf("apps:id=%s:instances:total", appID)] = len(s.instances[appID])
+//	}
+//
+//	return out
+//}

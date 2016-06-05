@@ -1,4 +1,4 @@
-package android
+package fcm
 
 type Storer interface {
 	AppSave(o *App) error

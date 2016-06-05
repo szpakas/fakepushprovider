@@ -6,11 +6,15 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/pkg/errors"
+	"golang.org/x/net/http2"
+
 	"github.com/uber-go/zap"
 	"github.com/vrischmann/envconfig"
 
-	"github.com/szpakas/fakepushprovider/android"
-	ahttp "github.com/szpakas/fakepushprovider/android/http"
+	"github.com/szpakas/fakepushprovider/apns"
+	"github.com/szpakas/fakepushprovider/fcm"
+	fhttp "github.com/szpakas/fakepushprovider/fcm/http"
 )
 
 const (
@@ -19,8 +23,12 @@ const (
 )
 
 type config struct {
+	// Service sets one of the supported services
+	// Valid services: fcm, apns
+	Service string
+
 	// AppsFile is path to test data file with apps definition.
-	AppsFile      string
+	AppsFile string
 
 	// InstancesFile is path to test data file with instances definition.
 	// Beware: apps from apps file have to match
@@ -35,6 +43,12 @@ type config struct {
 	// LogLevel is a minimal log severity required for the message to be logged.
 	// Valid levels: [all, debug, info, warn, error, fatal, panic, none].
 	LogLevel string `envconfig:"default=info"`
+
+	// APNSCertFile is path to file with APNS SSL cert in PEM format
+	APNSCertFile string `envconfig:"optional"`
+
+	// APNSKeyFile is path to file with APNS SSL cert in PEM format
+	APNSKeyFile string `envconfig:"optional"`
 }
 
 func main() {
@@ -57,9 +71,32 @@ func main() {
 
 	lgr.Info("starting")
 
-	storage := android.NewMemoryStorage()
-	mapper := android.NewMemoryMapper()
-	importer := android.NewJSONImporter(storage, mapper)
+	appsFile, err := os.Open(cfg.AppsFile)
+	if err != nil {
+		lgr.Fatal(err.Error())
+	}
+
+	instancesFile, err := os.Open(cfg.InstancesFile)
+	if err != nil {
+		lgr.Fatal(err.Error())
+	}
+
+	switch cfg.Service {
+	case "fcm":
+		serveFCM(cfg, lgr, appsFile, instancesFile)
+	case "apns":
+		serveAPNS(cfg, lgr, appsFile, instancesFile)
+	default:
+		lgr.Fatal("unknown service")
+	}
+}
+
+func serveFCM(cfg *config, lgr zap.Logger, appsFile, instancesFile *os.File) {
+	lgr = lgr.With(zap.String("service", "FCM"))
+
+	storage := fcm.NewMemoryStorage()
+	mapper := fcm.NewMemoryMapper()
+	importer := fcm.NewJSONImporter(storage, mapper)
 
 	appsFile, err := os.Open(cfg.AppsFile)
 	if err != nil {
@@ -69,10 +106,6 @@ func main() {
 	lgr.Info("import: apps")
 	appsFile.Close()
 
-	instancesFile, err := os.Open(cfg.InstancesFile)
-	if err != nil {
-		lgr.Fatal(err.Error())
-	}
 	importRep := importer.ImportInstances(instancesFile)
 	lgr.Info("import: instances")
 	instancesFile.Close()
@@ -83,13 +116,52 @@ func main() {
 	listenOn := fmt.Sprintf("%s:%d", cfg.HTTPHost, cfg.HTTPPort)
 	lgr.Info("start listening", zap.String("host", cfg.HTTPHost), zap.Int("port", cfg.HTTPPort))
 
-	h := ahttp.NewHandler(storage)
-	m := ahttp.LoggingMiddleware{
+	h := fhttp.NewHandler(storage)
+	m := fhttp.LoggingMiddleware{
 		Handler: h,
 		Logger:  lgr,
 	}
 	server := &http.Server{Addr: listenOn, Handler: &m}
 	if err := server.ListenAndServe(); err != nil {
+		lgr.Fatal(err.Error())
+	}
+}
+
+func serveAPNS(cfg *config, lgr zap.Logger, appsFile, instancesFile *os.File) {
+	lgr = lgr.With(zap.String("service", "APNS"))
+
+	if _, err := os.Open(cfg.APNSCertFile); err != nil {
+		lgr.Fatal(errors.Wrap(err, "APNSCertFile").Error())
+	}
+	if _, err := os.Open(cfg.APNSKeyFile); err != nil {
+		lgr.Fatal(errors.Wrap(err, "APNSKeyFile").Error())
+	}
+
+	listenOn := fmt.Sprintf("%s:%d", cfg.HTTPHost, cfg.HTTPPort)
+	lgr.Info("start listening", zap.String("host", cfg.HTTPHost), zap.Int("port", cfg.HTTPPort))
+
+	storage := apns.NewMemoryStorage()
+	mapper := apns.NewMemoryMapper()
+	importer := apns.NewJSONImporter(storage, mapper)
+
+	importer.ImportApps(appsFile)
+	lgr.Info("import: apps")
+	appsFile.Close()
+
+	importRep := importer.ImportInstances(instancesFile)
+	lgr.Info("import: instances")
+	instancesFile.Close()
+
+	lgr.Debug(fmt.Sprintf("import:instances:report => %+v", importRep))
+	//lgr.Debug(fmt.Sprintf("storage:report => %+v", storage.Report()))
+
+	srv := &http.Server{
+		Addr:    listenOn,
+		Handler: apns.NewHandler(storage),
+	}
+	http2.ConfigureServer(srv, &http2.Server{})
+
+	if err := srv.ListenAndServeTLS(cfg.APNSCertFile, cfg.APNSKeyFile); err != nil {
 		lgr.Fatal(err.Error())
 	}
 }
