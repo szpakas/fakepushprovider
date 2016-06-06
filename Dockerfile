@@ -7,6 +7,9 @@ COPY ./ $APP_PKG_DIR/
 
 RUN mkdir -p /srv
 
+RUN go get -u github.com/govend/govend
+RUN govend -v
+
 RUN go build -v -o server ./cmd/server/main.go \
     && mv ./server /srv/
 
