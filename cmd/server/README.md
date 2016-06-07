@@ -111,3 +111,17 @@ certificate example with UID set to bundleID
             Subject: UID=pl.example.prod, C=PL, ST=Silesia, L=Gliwice, O=Nyota
             Subject Public Key Info:
             ...
+
+## Middlewares
+
+Both APNS and FCM handlers allow for use of middlewares.
+Currently following middlewares are available:
+- logging
+- delay
+
+## Response Headers
+
+There are extra response headers introduced which are outside of the APNS/FCM specifications.
+
+- X-delayed-by-ms: number of milliseconds the response was delayed (set by DelayMiddleware)
+- X-requests-total: number of requests served by server till its start regardless of request outcome

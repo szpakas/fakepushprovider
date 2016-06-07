@@ -27,8 +27,8 @@ func (g *Generator) Generate(s Storer) {
 
 	for aCnt := 0; aCnt < g.AppTotal; aCnt++ {
 		app := App{
-			ID:       fmt.Sprintf("appId-%d", aCnt+1),
-			BundleID: fmt.Sprintf("bundleId-%d", aCnt+1),
+			ID:       fmt.Sprintf("appId%003d", aCnt+1),
+			BundleID: fmt.Sprintf("bundleId%003d", aCnt+1),
 		}
 
 		s.AppSave(&app)
@@ -46,7 +46,7 @@ func (g *Generator) Generate(s Storer) {
 			}
 
 			ins := Instance{
-				ID:    fmt.Sprintf("%s-instanceId-%d", app.ID, iCnt+1),
+				ID:    fmt.Sprintf("%s-instanceId-%06d", app.ID, iCnt+1),
 				State: state,
 				App:   &app,
 			}

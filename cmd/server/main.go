@@ -3,8 +3,10 @@ package main
 //noinspection SpellCheckingInspection
 import (
 	"fmt"
+	"math/rand"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/pkg/errors"
 	"golang.org/x/net/http2"
@@ -13,6 +15,7 @@ import (
 	"github.com/vrischmann/envconfig"
 
 	"github.com/szpakas/fakepushprovider/apns"
+	"github.com/szpakas/fakepushprovider/common"
 	"github.com/szpakas/fakepushprovider/fcm"
 	fhttp "github.com/szpakas/fakepushprovider/fcm/http"
 )
@@ -53,6 +56,9 @@ type config struct {
 
 func main() {
 	lgr := zap.NewJSON()
+
+	// TODO(szpakas): add possibility to enforce seed
+	rand.Seed(time.Now().UTC().UnixNano())
 
 	// - config from env
 	cfg := &config{}
@@ -117,7 +123,7 @@ func serveFCM(cfg *config, lgr zap.Logger, appsFile, instancesFile *os.File) {
 	lgr.Info("start listening", zap.String("host", cfg.HTTPHost), zap.Int("port", cfg.HTTPPort))
 
 	h := fhttp.NewHandler(storage)
-	m := fhttp.LoggingMiddleware{
+	m := common.LoggingMiddleware{
 		Handler: h,
 		Logger:  lgr,
 	}
@@ -155,10 +161,20 @@ func serveAPNS(cfg *config, lgr zap.Logger, appsFile, instancesFile *os.File) {
 	lgr.Debug(fmt.Sprintf("import:instances:report => %+v", importRep))
 	//lgr.Debug(fmt.Sprintf("storage:report => %+v", storage.Report()))
 
-	srv := &http.Server{
-		Addr:    listenOn,
-		Handler: apns.NewHandler(storage),
+	h := apns.NewHandler(storage)
+	mDelay := common.DelayMiddleware{
+		Handler: h,
+		DelayFn: func() int {
+			d := 20 + rand.Intn(100)
+			time.Sleep(time.Millisecond * time.Duration(d))
+			return d
+		},
 	}
+	mLog := common.LoggingMiddleware{
+		Handler: &mDelay,
+		Logger:  lgr,
+	}
+	srv := &http.Server{Addr: listenOn, Handler: &mLog}
 	http2.ConfigureServer(srv, &http2.Server{})
 
 	if err := srv.ListenAndServeTLS(cfg.APNSCertFile, cfg.APNSKeyFile); err != nil {
