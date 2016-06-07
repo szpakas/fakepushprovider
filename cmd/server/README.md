@@ -38,8 +38,7 @@ export APP_LOG_LEVEL="all"
 
 Generation of the SSL certificates which are supporting Subject Alternative Names for local use (also IP) without disabling TLS/SSL security in client.
 
-TODO(szpakas): add support for ASN1 userID OID extension (0.9.2342.19200300.100.1.1) for passing bundleID for topic selection.
-TODO(szpakas): add support for ASN1 commonName field (2.5.4.3) for passing APNS environment (Apple Development IOS Push Services / Apple Production IOS Push Services / Apple Push Services).
+    TODO(szpakas): add support for ASN1 commonName field (2.5.4.3) for passing APNS environment (Apple Development IOS Push Services / Apple Production IOS Push Services / Apple Push Services).
 
 openssl.cnf
 ```
@@ -49,6 +48,8 @@ x509_extensions = v3_req
 prompt = no
 
 [req_distinguished_name]
+# userID OID extension (0.9.2342.19200300.100.1.1) for passing bundleID for topic selection
+userId = pl.example.prod
 # As defined in 4.1.2.4 and appendix A of RFC 5280
 countryName = PL
 stateOrProvinceName = Silesia
@@ -68,6 +69,7 @@ IP.1 = 192.168.99.100
 IP.2 = 127.0.0.1
 ```
 
+generate.sh
 ```bash
 #!/usr/bin/env bash
 
@@ -93,3 +95,19 @@ cat ${BASE_CERT_NAME}-cert.pem ${BASE_CERT_NAME}-key.pem > ${BASE_CERT_NAME}-pai
 # examine CERT
 openssl x509 -in ${BASE_CERT_NAME}-cert.pem -noout -text
 ```
+
+certificate example with UID set to bundleID
+
+    Certificate:
+        Data:
+            Version: 3 (0x2)
+            Serial Number:
+                b6:f3:af:b7:3b:b1:b5:7e
+            Signature Algorithm: sha1WithRSAEncryption
+            Issuer: UID=pl.example.prod, C=PL, ST=Silesia, L=Gliwice, O=Nyota
+            Validity
+                Not Before: Jun  7 19:44:19 2016 GMT
+                Not After : Jun  5 19:44:19 2026 GMT
+            Subject: UID=pl.example.prod, C=PL, ST=Silesia, L=Gliwice, O=Nyota
+            Subject Public Key Info:
+            ...
