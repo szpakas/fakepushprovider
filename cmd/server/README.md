@@ -118,6 +118,7 @@ Both APNS and FCM handlers allow for use of middlewares.
 Currently following middlewares are available:
 - logging
 - delay
+- instrumentation
 
 ## Response Headers
 
@@ -125,3 +126,12 @@ There are extra response headers introduced which are outside of the APNS/FCM sp
 
 - X-delayed-by-ms: number of milliseconds the response was delayed (set by DelayMiddleware)
 - X-requests-total: number of requests served by server till its start regardless of request outcome
+
+## Instrumentation
+
+Instrumentation is based on [Prometheus](https://prometheus.io).
+
+Metrics:
+- push_requests_total: 
+-- type: CounterVec
+-- desc: How many push requests were processed, partitioned by provider, status code and error reason.

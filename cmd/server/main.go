@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/net/http2"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/uber-go/zap"
 	"github.com/vrischmann/envconfig"
 
@@ -42,6 +43,12 @@ type config struct {
 
 	// HTTPPort is a port number on which HTTP server endpoint is listening.
 	HTTPPort int `envconfig:"default=8080"`
+
+	// MetricsHost is address on which metric HTTP server endpoint is listening.
+	MetricsHost string `envconfig:"default=0.0.0.0"`
+
+	// MetricsPort is a port number on which metric HTTP server endpoint is listening.
+	MetricsPort int `envconfig:"default=9999"`
 
 	// LogLevel is a minimal log severity required for the message to be logged.
 	// Valid levels: [all, debug, info, warn, error, fatal, panic, none].
@@ -86,6 +93,18 @@ func main() {
 	if err != nil {
 		lgr.Fatal(err.Error())
 	}
+
+	go func() {
+		listenOn := fmt.Sprintf("%s:%d", cfg.MetricsHost, cfg.MetricsPort)
+		lgr.Info("metrics start listening", zap.String("host", cfg.MetricsHost), zap.Int("port", cfg.MetricsPort))
+		s := &http.Server{
+			Addr:    listenOn,
+			Handler: prometheus.Handler(),
+		}
+		if err := s.ListenAndServe(); err != nil {
+			lgr.Fatal(err.Error())
+		}
+	}()
 
 	switch cfg.Service {
 	case "fcm":
@@ -174,7 +193,8 @@ func serveAPNS(cfg *config, lgr zap.Logger, appsFile, instancesFile *os.File) {
 		Handler: &mDelay,
 		Logger:  lgr,
 	}
-	srv := &http.Server{Addr: listenOn, Handler: &mLog}
+	mInstr := common.NewInstrMiddleware(&mLog, "apns")
+	srv := &http.Server{Addr: listenOn, Handler: mInstr}
 	http2.ConfigureServer(srv, &http2.Server{})
 
 	if err := srv.ListenAndServeTLS(cfg.APNSCertFile, cfg.APNSKeyFile); err != nil {

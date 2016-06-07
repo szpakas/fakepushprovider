@@ -2,6 +2,7 @@ package apns
 
 import (
 	"encoding/json"
+	"github.com/szpakas/fakepushprovider/common"
 	"net/http"
 	"regexp"
 )
@@ -71,6 +72,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) writeErrorUnregistered(w http.ResponseWriter, r *http.Request, lastSeen int64) {
 	reason := ReasonUnregistered
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set(common.HeaderXError, string(reason))
 	w.WriteHeader(reason.Status())
 	response := map[string]interface{}{
 		"reason":    string(reason),
@@ -81,6 +83,7 @@ func (h *Handler) writeErrorUnregistered(w http.ResponseWriter, r *http.Request,
 
 func (h *Handler) writeError(w http.ResponseWriter, r *http.Request, reason ResultReason) {
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set(common.HeaderXError, string(reason))
 	w.WriteHeader(reason.Status())
 	response := map[string]interface{}{
 		"reason": string(reason),

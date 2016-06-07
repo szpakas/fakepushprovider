@@ -1,6 +1,7 @@
 package common
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -8,7 +9,13 @@ import (
 	"strings"
 	"sync/atomic"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/uber-go/zap"
+)
+
+const (
+	// HeaderXError carries request error
+	HeaderXError = "X-Error"
 )
 
 // LoggingMiddleware allows logging of the request and response.
@@ -85,4 +92,56 @@ func (m *DelayMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	m.Handler.ServeHTTP(w, r)
 
 	w.Header().Add("X-delayed-by-ms", strconv.Itoa(d))
+}
+
+// InstrumentationMiddleware introduces prometheus based instrumentation.
+type InstrumentationMiddleware struct {
+	// Handler is the handler to be wrapped
+	Handler http.Handler
+
+	// RequestsTotalMetric is prometheus counter vector counting
+	// how many push requests were processed, partitioned by provider, status code and error reason.
+	RequestsTotalMetric *prometheus.CounterVec
+}
+
+func NewInstrMiddleware(h http.Handler, provider string) *InstrumentationMiddleware {
+	reqTotM := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name:        "push_requests_total",
+			Help:        "How many push requests were processed, partitioned by provider, status code and error reason.",
+			ConstLabels: prometheus.Labels{"provider": provider},
+		},
+		[]string{"code", "error"},
+	)
+	prometheus.MustRegister(reqTotM)
+
+	return &InstrumentationMiddleware{
+		Handler:             h,
+		RequestsTotalMetric: reqTotM,
+	}
+}
+
+// ServeHTTP is introducing instrumentation.
+func (m *InstrumentationMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	rec := &httptest.ResponseRecorder{
+		HeaderMap: make(http.Header),
+		Body:      new(bytes.Buffer),
+	}
+
+	m.Handler.ServeHTTP(rec, r)
+
+	// -- recreate the response
+	for k, v := range rec.Header() {
+		w.Header()[k] = v
+	}
+	w.WriteHeader(rec.Code)
+	w.Write(rec.Body.Bytes())
+
+	// -- record metrics
+	switch rec.Code {
+	case http.StatusOK:
+		m.RequestsTotalMetric.WithLabelValues("200", "").Inc()
+	default:
+		m.RequestsTotalMetric.WithLabelValues(strconv.Itoa(rec.Code), rec.Header().Get(HeaderXError)).Inc()
+	}
 }
